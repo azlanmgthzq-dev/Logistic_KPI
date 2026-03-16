@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistics KPI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #e8edf3;
+    --border: #d1dae6;
+    --accent1: #00a887;
+    --accent2: #e05555;
+    --accent3: #d4960a;
+    --text: #1a2235;
+    --muted: #7a8faa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #d8e0ea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .canvas-16-9 {
+    position: relative;
+    width: 100vw;
+    height: 56.25vw;
+    max-height: 100vh;
+    max-width: 177.78vh;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 15% 10%, rgba(0,168,135,0.07) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 85%, rgba(224,85,85,0.04) 0%, transparent 45%);
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    padding: 1.5% 2%;
+    gap: 0.8%;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.7%;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand { display: flex; align-items: baseline; gap: 0.8em; }
+
+  .brand-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8vw;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent1);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9vw;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.2em;
+    font-size: 0.75vw;
+    color: var(--muted);
+  }
+
+  .live-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    background: rgba(0,212,170,0.08);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 20px;
+    padding: 0.2em 0.7em;
+    color: var(--accent1);
+    font-size: 0.72vw;
+  }
+  .live-dot {
+    width: 0.38vw; height: 0.38vw;
+    border-radius: 50%;
+    background: var(--accent1);
+    animation: pulse 2s infinite;
+  }
+
+  /* BODY */
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 2.5fr;
+    gap: 0.9%;
+    min-height: 0;
+  }
+
+  /* LEFT */
+  .left-col {
+    display: grid;
+    grid-template-rows: auto auto auto 1fr;
+    gap: 0.8%;
+    min-height: 0;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.55vw;
+    padding: 0.75vw 0.9vw;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.green::before  { background: var(--accent1); }
+  .kpi-card.yellow::before { background: var(--accent3); }
+
+  .kpi-label {
+    font-size: 0.68vw;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.25vw;
+  }
+  .kpi-row { display: flex; align-items: baseline; gap: 0.5em; flex-wrap: wrap; }
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.9vw;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .kpi-card.green  .kpi-value { color: var(--accent1); }
+  .kpi-card.yellow .kpi-value { color: var(--accent3); }
+
+  .kpi-badge {
+    font-size: 0.62vw;
+    font-weight: 500;
+    padding: 0.12em 0.45em;
+    border-radius: 20px;
+  }
+  .badge-green  { background: rgba(0,212,170,0.12);  color: var(--accent1); }
+  .badge-yellow { background: rgba(255,209,102,0.12); color: var(--accent3); }
+  .badge-red    { background: rgba(255,107,107,0.12); color: var(--accent2); }
+
+  .kpi-sub { font-size: 0.62vw; color: var(--muted); margin-top: 0.18vw; }
+
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.55vw;
+    padding: 0.7vw 0.9vw;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.65vw;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.45vw;
+    flex-shrink: 0;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.6vw;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.3vw 0.4vw;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.32vw 0.4vw;
+    font-size: 0.65vw;
+    border-bottom: 1px solid rgba(30,45,69,0.4);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    padding: 0.12em 0.5em;
+    border-radius: 20px;
+    font-size: 0.6vw;
+    font-weight: 500;
+  }
+  .pill-green  { background: rgba(0,212,170,0.12);  color: var(--accent1); }
+  .pill-yellow { background: rgba(255,209,102,0.12); color: var(--accent3); }
+  .pill-red    { background: rgba(255,107,107,0.12); color: var(--accent2); }
+
+  .pct-bar-wrap { display: flex; align-items: center; gap: 0.35vw; }
+  .pct-bar { height: 3px; border-radius: 2px; background: var(--surface2); flex: 1; }
+  .pct-bar-fill { height: 100%; border-radius: 2px; }
+
+  /* RIGHT */
+  .right-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.9%;
+    min-height: 0;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.55vw;
+    padding: 0.7vw 0.9vw;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .chart-card.wide { grid-column: 1 / -1; }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35vw;
+    flex-shrink: 0;
+  }
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75vw;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .chart-subtitle { font-size: 0.58vw; color: var(--muted); margin-top: 1px; }
+  .chart-tag {
+    font-size: 0.58vw;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 0.18em 0.55em;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .chart-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  .chart-wrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+<div class="canvas-16-9">
+
+  <header>
+    <div class="brand">
+      <span class="brand-label">Performance Intelligence</span>
+      <h1>Logistics KPI</h1>
+    </div>
+    <div class="header-meta">
+      <span>Oct 2025 – Feb 2026 &nbsp;·&nbsp; 5 months &nbsp;·&nbsp; 3 KPIs tracked</span>
+      <div class="live-chip"><div class="live-dot"></div> Live Data</div>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <div class="left-col">
+      <div class="kpi-card green">
+        <div class="kpi-label">Shipment Shipping Out</div>
+        <div class="kpi-row">
+          <div class="kpi-value">88.3%</div>
+          <span class="kpi-badge badge-yellow">⚠ Below target</span>
+        </div>
+        <div class="kpi-sub">Avg success rate · 5 months</div>
+      </div>
+
+      <div class="kpi-card green">
+        <div class="kpi-label">Goods Received</div>
+        <div class="kpi-row">
+          <div class="kpi-value">100%</div>
+          <span class="kpi-badge badge-green">✓ On target</span>
+        </div>
+        <div class="kpi-sub">All months fully compliant</div>
+      </div>
+
+      <div class="kpi-card yellow">
+        <div class="kpi-label">Asset Value · Feb 2026</div>
+        <div class="kpi-row">
+          <div class="kpi-value">RM 1.147M</div>
+          <span class="kpi-badge badge-red">↓ Below RM 1.2M</span>
+        </div>
+        <div class="kpi-sub">Target: RM 1,200,000</div>
+      </div>
+
+      <div class="table-card">
+        <div class="section-label">Monthly Detail</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Shipment</th>
+              <th>GR Rate</th>
+              <th>Asset (RM)</th>
+              <th>Asset Success Rate</th>
+            </tr>
+          </thead>
+          <tbody id="dataTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Shipment Success Rate</div>
+            <div class="chart-subtitle">Monthly · % Compliant</div>
+          </div>
+          <span class="chart-tag">Target: 100%</span>
+        </div>
+        <div class="chart-wrap"><canvas id="shipmentChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Goods Received Rate</div>
+            <div class="chart-subtitle">Monthly · % Compliant</div>
+          </div>
+          <span class="chart-tag">Target: 100%</span>
+        </div>
+        <div class="chart-wrap"><canvas id="goodsChart"></canvas></div>
+      </div>
+
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Asset Value Over Time</div>
+            <div class="chart-subtitle">Jan 2025 – Feb 2026 · Bars = Asset Value · Line = Success Rate</div>
+          </div>
+          <span class="chart-tag">Target: RM 1,200,000 · ±5%</span>
+        </div>
+        <div class="chart-wrap"><canvas id="assetChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+const months   = ['Oct 2025','Nov 2025','Dec 2025','Jan 2026','Feb 2026'];
+const shipment = [1, 0.7059, 0.8571, 1, 0.8333];
+const goods    = [1, 1, 1, 1, 1];
+const TARGET   = 1200000;
+
+// Full asset data from spreadsheet (Jan 2025 – Feb 2026)
+const assetMonths = [
+  'Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25',
+  'Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25',
+  'Jan 26','Feb 26'
+];
+const assetValues = [
+  1229263, 1264604, 1200800, 1204965, 1214500, 1198567,
+  1226941, 1217854, 1211067, 1222437, 1208527, 1173116,
+  1174229, 1147416
+];
+// Success rate as % (100% = exactly at or below target within ±5%)
+const assetSuccessRate = [
+  97.62, 94.89, 99.93, 99.59, 98.81, 100,
+  97.80, 98.53, 99.09, 98.16, 99.29, 100,
+  100, 100
+];
+
+const base = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 800 },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#ffffff',
+      borderColor: '#d1dae6',
+      borderWidth: 1,
+      titleColor: '#1a2235',
+      bodyColor: '#7a8faa',
+      titleFont: { family: 'Syne', weight: '700', size: 11 },
+      bodyFont: { family: 'DM Mono', size: 10 },
+      padding: 8
+    },
+    datalabels: { display: false }
+  },
+  scales: {
+    x: {
+      grid: { color: 'rgba(209,218,230,0.7)' },
+      ticks: { color: '#7a8faa', font: { family: 'DM Mono', size: 11 } },
+      border: { display: false }
+    },
+    y: {
+      grid: { color: 'rgba(209,218,230,0.7)' },
+      ticks: { color: '#7a8faa', font: { family: 'DM Mono', size: 11 } },
+      border: { display: false }
+    }
+  }
+};
+
+// Shipment chart
+new Chart(document.getElementById('shipmentChart'), {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [
+      { data: shipment.map(v=>+(v*100).toFixed(1)),
+        backgroundColor: shipment.map(v=>v===1?'rgba(0,168,135,0.25)':'rgba(212,150,10,0.25)'),
+        borderColor: shipment.map(v=>v===1?'#00a887':'#d4960a'),
+        borderWidth: 1.5, borderRadius: 4,
+        datalabels: {
+          display: true,
+          anchor: 'end', align: 'end', offset: 2,
+          color: shipment.map(v=>v===1?'#00a887':'#d4960a'),
+          font: { family: 'Syne', weight: '700', size: 13 },
+          formatter: v => v + '%'
+        }
+      },
+      { data:[100,100,100,100,100], type:'line', borderColor:'rgba(224,85,85,0.6)',
+        borderDash:[4,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0,
+        datalabels: { display: false } }
+    ]
+  },
+  options: { ...base,
+    layout: { padding: { top: 20 } },
+    scales: { ...base.scales, y: { ...base.scales.y, min:0, max:120,
+      ticks: { ...base.scales.y.ticks, callback: v=>v+'%' } } },
+    plugins: { ...base.plugins, tooltip: { ...base.plugins.tooltip,
+      callbacks: { label: ctx=>' '+ctx.parsed.y+'%' } } }
+  }
+});
+
+// Goods Received chart
+new Chart(document.getElementById('goodsChart'), {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [
+      { data: goods.map(v=>v*100), backgroundColor:'rgba(0,168,135,0.25)',
+        borderColor:'#00a887', borderWidth:1.5, borderRadius:4,
+        datalabels: {
+          display: true,
+          anchor: 'end', align: 'end', offset: 2,
+          color: '#00a887',
+          font: { family: 'Syne', weight: '700', size: 13 },
+          formatter: v => v + '%'
+        }
+      },
+      { data:[100,100,100,100,100], type:'line', borderColor:'rgba(224,85,85,0.6)',
+        borderDash:[4,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0,
+        datalabels: { display: false } }
+    ]
+  },
+  options: { ...base,
+    layout: { padding: { top: 20 } },
+    scales: { ...base.scales, y: { ...base.scales.y, min:0, max:120,
+      ticks: { ...base.scales.y.ticks, callback: v=>v+'%' } } }
+  }
+});
+
+// Asset Value chart — dual axis: bars = asset value, line = success rate
+new Chart(document.getElementById('assetChart'), {
+  type: 'bar',
+  data: {
+    labels: assetMonths,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Asset Value (RM)',
+        data: assetValues,
+        backgroundColor: assetValues.map(v => v <= TARGET ? 'rgba(0,168,135,0.25)' : 'rgba(224,85,85,0.25)'),
+        borderColor:     assetValues.map(v => v <= TARGET ? '#00a887' : '#e05555'),
+        borderWidth: 1.5, borderRadius: 3,
+        yAxisID: 'yAsset',
+        datalabels: { display: false }
+      },
+      {
+        type: 'line',
+        label: 'Target (RM 1.2M)',
+        data: assetValues.map(() => TARGET),
+        borderColor: 'rgba(224,85,85,0.55)',
+        borderDash: [5,5], borderWidth: 1.5,
+        pointRadius: 0, fill: false, tension: 0,
+        yAxisID: 'yAsset',
+        datalabels: { display: false }
+      },
+      {
+        type: 'line',
+        label: 'Success Rate (%)',
+        data: assetSuccessRate,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.07)',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: assetSuccessRate.map(v => v >= 100 ? '#00a887' : '#d4960a'),
+        pointBorderColor: '#f0f4f8',
+        pointBorderWidth: 1.5,
+        fill: false, tension: 0.3,
+        yAxisID: 'yRate',
+        datalabels: {
+          display: true,
+          align: 'top', offset: 4,
+          color: assetSuccessRate.map(v => v >= 100 ? '#00a887' : '#d4960a'),
+          font: { family: 'Syne', weight: '700', size: 11 },
+          formatter: v => v.toFixed(1) + '%'
+        }
+      }
+    ]
+  },
+  options: {
+    ...base,
+    layout: { padding: { top: 22 } },
+    scales: {
+      x: { ...base.scales.x },
+      yAsset: {
+        type: 'linear', position: 'left',
+        min: 1080000, max: 1300000,
+        grid: { color: 'rgba(209,218,230,0.7)' },
+        ticks: { color: '#7a8faa', font: { family: 'DM Mono', size: 11 }, callback: v => 'RM '+(v/1e6).toFixed(2)+'M' },
+        border: { display: false }
+      },
+      yRate: {
+        type: 'linear', position: 'right',
+        min: 90, max: 105,
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#6366f1', font: { family: 'DM Mono', size: 11 }, callback: v => v+'%' },
+        border: { display: false }
+      }
+    },
+    plugins: {
+      ...base.plugins,
+      tooltip: {
+        ...base.plugins.tooltip,
+        callbacks: {
+          label: ctx => {
+            if (ctx.dataset.yAxisID === 'yAsset' && ctx.dataset.type === 'bar')
+              return ' RM ' + ctx.parsed.y.toLocaleString();
+            if (ctx.dataset.yAxisID === 'yRate')
+              return ' Success Rate: ' + ctx.parsed.y.toFixed(2) + '%';
+            return '';
+          }
+        }
+      }
+    }
+  }
+});
+
+const tbody = document.getElementById('dataTable');
+months.forEach((m,i) => {
+  const sp   = (shipment[i]*100).toFixed(1);
+  const gp   = (goods[i]*100).toFixed(0);
+  const av   = assetValues[9+i].toLocaleString();
+  const sr   = assetSuccessRate[9+i];
+  const diff = assetValues[9+i]-TARGET;
+  const dStr = (diff>=0?'+':'')+Math.abs(diff).toLocaleString();
+  const dCls = diff>=0?'pill-red':'pill-green';
+  const sCls = shipment[i]===1?'pill-green':'pill-yellow';
+  const sIco = shipment[i]===1?'✓':'⚠';
+  const fw   = Math.min(parseFloat(sp),100);
+  const fc   = shipment[i]===1?'#00a887':'#d4960a';
+  const srCls= sr>=100?'pill-green':'pill-yellow';
+  tbody.innerHTML += `
+    <tr>
+      <td style="font-family:'Syne',sans-serif;font-weight:600">${m}</td>
+      <td>
+        <div class="pct-bar-wrap">
+          <span class="pill ${sCls}">${sIco} ${sp}%</span>
+          <div class="pct-bar"><div class="pct-bar-fill" style="width:${fw}%;background:${fc}"></div></div>
+        </div>
+      </td>
+      <td><span class="pill pill-green">✓ ${gp}%</span></td>
+      <td style="font-family:'Syne',sans-serif;font-weight:600">${av}</td>
+      <td><span class="pill ${srCls}">${sr.toFixed(2)}%</span></td>
+    </tr>`;
+});
+</script>
+</body>
+</html>
